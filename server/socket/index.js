@@ -4,6 +4,7 @@ export const initSocket = (io) => {
 
     socket.on('join-complaint', (complaintId) => {
       socket.join(`complaint-${complaintId}`)
+      console.log(`Socket joined room: complaint-${complaintId}`)
     })
 
     socket.on('join-area', (area) => {
@@ -12,6 +13,7 @@ export const initSocket = (io) => {
 
     socket.on('join-dashboard', () => {
       socket.join('dashboard')
+      console.log('Socket joined dashboard room')
     })
 
     socket.on('disconnect', () => {

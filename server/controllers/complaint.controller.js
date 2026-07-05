@@ -26,7 +26,7 @@ export const createComplaint = async (req, res) => {
 }
 
 export const getComplaints = async (req, res) => {
-  const { area, status, priority, category, department, assignedTo } = req.query
+  const { area, status, priority, category, department, assignedTo, citizenId } = req.query
   const filter = {}
   if (area) filter.area = { $regex: area, $options: 'i' }
   if (status) filter.status = status
@@ -34,10 +34,11 @@ export const getComplaints = async (req, res) => {
   if (category) filter.category = category
   if (department) filter.department = department
   if (assignedTo) filter.assignedTo = assignedTo
+  if (citizenId) filter.citizenId = citizenId
 
   const complaints = await Complaint.find(filter)
     .sort({ createdAt: -1 })
-    .populate('citizenId', 'name email')
+    .populate('citizenId', 'name email phone')
     .populate('assignedTo', 'name email')
 
   res.json({ complaints })
@@ -45,7 +46,7 @@ export const getComplaints = async (req, res) => {
 
 export const getComplaintById = async (req, res) => {
   const complaint = await Complaint.findById(req.params.id)
-    .populate('citizenId', 'name email')
+    .populate('citizenId', 'name email phone')
     .populate('assignedTo', 'name email')
   if (!complaint) return res.status(404).json({ message: 'Complaint not found' })
   res.json({ complaint })
@@ -58,12 +59,13 @@ export const updateStatus = async (req, res) => {
 
   complaint.status = status
   complaint.timeline.push({
-    message: `Status updated to ${status}`,
+    message: `Status updated to ${status} by ${req.user.name}`,
     updatedBy: req.user._id,
     timestamp: new Date()
   })
   await complaint.save()
 
+  // Push to citizen socket room
   emitStatusUpdate(io, complaint._id.toString(), status, complaint.timeline)
   emitDashboardUpdate(io)
 
@@ -72,21 +74,23 @@ export const updateStatus = async (req, res) => {
 
 export const assignDepartment = async (req, res) => {
   const { department } = req.body
-  const complaint = await Complaint.findByIdAndUpdate(
-    req.params.id,
-    {
-      department,
-      $push: {
-        timeline: {
-          message: `Assigned to ${department} Department`,
-          updatedBy: req.user._id,
-          timestamp: new Date()
-        }
-      }
-    },
-    { new: true }
-  )
+  if (!department) return res.status(400).json({ message: 'Department is required' })
+
+  const complaint = await Complaint.findById(req.params.id)
+  if (!complaint) return res.status(404).json({ message: 'Complaint not found' })
+
+  complaint.department = department
+  complaint.timeline.push({
+    message: `Assigned to ${department} Department by ${req.user.name}`,
+    updatedBy: req.user._id,
+    timestamp: new Date()
+  })
+  await complaint.save()
+
+  // Push realtime to citizen
   emitStatusUpdate(io, complaint._id.toString(), complaint.status, complaint.timeline)
+  emitDashboardUpdate(io)
+
   res.json({ complaint })
 }
 
@@ -98,7 +102,7 @@ export const assignWorker = async (req, res) => {
       assignedTo: workerId,
       $push: {
         timeline: {
-          message: 'Assigned to worker',
+          message: `Assigned to worker by ${req.user.name}`,
           updatedBy: req.user._id,
           timestamp: new Date()
         }
@@ -106,12 +110,13 @@ export const assignWorker = async (req, res) => {
     },
     { new: true }
   )
+
+  emitStatusUpdate(io, complaint._id.toString(), complaint.status, complaint.timeline)
   res.json({ complaint })
 }
 
 export const addProgress = async (req, res) => {
   const { message } = req.body
-
   const complaint = await Complaint.findById(req.params.id)
   if (!complaint) return res.status(404).json({ message: 'Not found' })
 

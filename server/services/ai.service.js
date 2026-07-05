@@ -1,31 +1,28 @@
-import Anthropic from '@anthropic-ai/sdk'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 import { buildComplaintPrompt } from '../utils/aiPrompt.js'
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
 
 export const processComplaint = async (description, city, area) => {
   try {
-    const message = await client.messages.create({
-      model: 'claude-opus-4-5',
-      max_tokens: 500,
-      messages: [{
-        role: 'user',
-        content: buildComplaintPrompt(description, city, area)
-      }]
-    })
-
-    const text = message.content[0].text.trim()
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+    const result = await model.generateContent(
+      buildComplaintPrompt(description, city, area)
+    )
+    const text = result.response.text().trim()
     const cleaned = text.replace(/```json|```/g, '').trim()
-    const result = JSON.parse(cleaned)
+    const parsed = JSON.parse(cleaned)
+
+    console.log('✅ Gemini AI result:', parsed)
 
     return {
-      category: result.category || 'Other',
-      priority: result.priority || 'LOW',
-      department: result.department || 'Other',
-      aiSummary: result.summary || '',
+      category: parsed.category || 'Other',
+      priority: parsed.priority || 'LOW',
+      department: parsed.department || 'Other',
+      aiSummary: parsed.summary || '',
     }
   } catch (err) {
-    console.error('AI processing error:', err.message)
+    console.error('❌ Gemini AI error:', err.message)
     return { category: 'Other', priority: 'LOW', department: 'Other', aiSummary: '' }
   }
 }

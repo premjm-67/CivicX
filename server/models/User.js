@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
     enum: ['citizen', 'admin', 'department_admin', 'worker'],
     default: 'citizen'
   },
+  phone: { type: String, default: '' },
   department: { type: String, default: null },
   area: { type: String, default: null },
 }, { timestamps: true })

@@ -8,7 +8,7 @@ import { upload } from '../middleware/upload.middleware.js'
 
 const router = express.Router()
 
-router.post('/', upload.array('media', 5), createComplaint)
+router.post('/', verifyToken, upload.array('media', 5), createComplaint)
 router.get('/', getComplaints)
 router.get('/:id', getComplaintById)
 router.patch('/:id/status', verifyToken, requireRole('admin', 'department_admin', 'worker'), updateStatus)
