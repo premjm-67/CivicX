@@ -1,4 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
+<<<<<<< HEAD
+=======
+import { useNavigate } from 'react-router-dom'
+>>>>>>> 2d2bc782c0cf72e2daca6375674b1760781d320a
 import { useAuth } from '../../context/AuthContext'
 import { useSocket } from '../../context/SocketContext'
 import ChatMessage from './ChatMessage'
@@ -9,17 +13,28 @@ import api from '../../services/api'
 const STEPS = {
   issue: "Hi! I'm CivicX 👋 I'll help you report a civic issue.\n\nPlease describe the problem you're facing.",
   city: "Got it! Which city is this issue in?",
+<<<<<<< HEAD
   area: "Which area or locality?",
   media: "Would you like to upload any photos or videos? (optional)",
   location: "Can you share your live location? (optional)",
+=======
+  area: "Which area or locality is this?",
+  media: "Would you like to upload any photos or videos? (optional)",
+  location: "Can you share your live location? (optional — helps us pinpoint the issue)",
+>>>>>>> 2d2bc782c0cf72e2daca6375674b1760781d320a
 }
 
 export default function ChatWindow() {
   const { user } = useAuth()
   const { socket } = useSocket()
+<<<<<<< HEAD
   const bottomRef = useRef(null)
   const lastTimelineCount = useRef(1)
   const currentComplaintId = useRef(null)
+=======
+  const navigate = useNavigate()
+  const bottomRef = useRef(null)
+>>>>>>> 2d2bc782c0cf72e2daca6375674b1760781d320a
 
   const [messages, setMessages] = useState([
     { id: 1, sender: 'bot', text: `Hello ${user?.name || 'there'}! 👋\n\n${STEPS.issue}` }
@@ -31,13 +46,18 @@ export default function ChatWindow() {
   })
   const [loading, setLoading] = useState(false)
   const [complaintId, setComplaintId] = useState(null)
+<<<<<<< HEAD
   const [socketConnected, setSocketConnected] = useState(false)
 
   // Auto scroll to bottom
+=======
+
+>>>>>>> 2d2bc782c0cf72e2daca6375674b1760781d320a
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+<<<<<<< HEAD
   // Track socket connection
   useEffect(() => {
     if (!socket) return
@@ -153,6 +173,49 @@ export default function ChatWindow() {
       ...prev,
       { id: Date.now(), sender, text }
     ])
+=======
+  // ⚡ SOCKET.IO — Listen for realtime updates
+  useEffect(() => {
+    if (!socket || !complaintId) return
+
+    // Join the specific complaint room
+    socket.emit('join-complaint', complaintId)
+    console.log('Joined complaint room:', complaintId)
+
+    // Listen for ANY update from server
+    socket.on('status-update', (data) => {
+      if (data.complaintId === complaintId) {
+        // Get the latest timeline message
+        const latest = data.timeline?.[data.timeline.length - 1]
+        
+        // Show as bot message in chatbot
+        if (latest) {
+          addBotMessage(`🔔 Update: ${latest.message}`)
+        }
+
+        // Show status change
+        if (data.status === 'in-progress') {
+          addBotMessage(`🔄 Your complaint is now **In Progress**!\nA worker has been assigned and is working on it.`)
+        } else if (data.status === 'resolved') {
+          addBotMessage(`✅ Your complaint has been **Resolved**!\nThank you for reporting. Your area is being taken care of.`)
+        }
+      }
+    })
+
+    return () => {
+      socket.off('status-update')
+    }
+  }, [socket, complaintId])
+
+  const addMessage = (text, sender = 'user') => {
+    setMessages(prev => [...prev, { id: Date.now(), sender, text }])
+  }
+
+  const addBotMessage = (text) => {
+    setTimeout(() => {
+      setMessages(prev => [...prev, { id: Date.now() + 1, sender: 'bot', text }])
+    }, 500)
+>>>>>>> 2d2bc782c0cf72e2daca6375674b1760781d320a
   }
 
   const handleSend = () => {
@@ -209,7 +272,11 @@ export default function ChatWindow() {
       `📝 Issue: ${data.issue}\n` +
       `🏙️ City: ${data.city}\n` +
       `📍 Area: ${data.area}\n\n` +
+<<<<<<< HEAD
       `Shall I submit this?`
+=======
+      `Shall I submit this complaint?`
+>>>>>>> 2d2bc782c0cf72e2daca6375674b1760781d320a
     )
   }
 
@@ -229,6 +296,7 @@ export default function ChatWindow() {
       data.media.forEach(f => formData.append('media', f))
 
       const res = await api.post('/complaints', formData)
+<<<<<<< HEAD
       const complaint = res.data.complaint
       const id = complaint._id
 
@@ -293,6 +361,34 @@ export default function ChatWindow() {
       addBotMessage(
         err.response?.data?.message || 'Something went wrong. Please try again.'
       )
+=======
+      const id = res.data.complaint._id
+      setComplaintId(id)
+      setStep('tracking')
+
+      // ⚡ SOCKET.IO — Show AI result as bot message
+      addBotMessage(
+        `✅ Complaint submitted successfully!\n\n` +
+        `🔖 Your ID: ${id}\n\n` +
+        `🤖 AI is analyzing your complaint...`
+      )
+
+      // Show AI results after small delay
+      setTimeout(() => {
+        const c = res.data.complaint
+        addBotMessage(
+          `🧠 AI Analysis Complete:\n\n` +
+          `📂 Category: ${c.category}\n` +
+          `🚨 Priority: ${c.priority}\n` +
+          `🏛️ Department: ${c.department}\n\n` +
+          `📋 Summary: ${c.aiSummary}\n\n` +
+          `⚡ You'll receive live updates here as your complaint progresses!`
+        )
+      }, 2000)
+
+    } catch {
+      addBotMessage('Something went wrong. Please try again.')
+>>>>>>> 2d2bc782c0cf72e2daca6375674b1760781d320a
       setStep('confirm')
     } finally {
       setLoading(false)
@@ -300,19 +396,27 @@ export default function ChatWindow() {
   }
 
   const handleRestart = () => {
+<<<<<<< HEAD
     setMessages([
       { id: 1, sender: 'bot', text: `Hello ${user?.name}! 👋\n\n${STEPS.issue}` }
     ])
+=======
+    setMessages([{ id: 1, sender: 'bot', text: `Hello ${user?.name}! 👋\n\n${STEPS.issue}` }])
+>>>>>>> 2d2bc782c0cf72e2daca6375674b1760781d320a
     setStep('issue')
     setData({ issue: '', city: '', area: '', media: [], location: null })
     setInput('')
     setComplaintId(null)
+<<<<<<< HEAD
     lastTimelineCount.current = 1
     currentComplaintId.current = null
+=======
+>>>>>>> 2d2bc782c0cf72e2daca6375674b1760781d320a
   }
 
   return (
     <div className="flex flex-col h-[calc(100vh-57px)] max-w-2xl mx-auto">
+<<<<<<< HEAD
 
       {/* Header */}
       <div className="bg-blue-600 text-white px-6 py-4 flex items-center gap-3 flex-shrink-0 shadow-md">
@@ -336,12 +440,34 @@ export default function ChatWindow() {
             <span className="text-xs text-blue-100">
               {socketConnected ? 'Online' : 'Connecting...'}
             </span>
+=======
+      {/* Header */}
+      <div className="bg-blue-600 text-white px-6 py-4 flex items-center gap-3 flex-shrink-0">
+        <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold text-sm">CF</div>
+        <div>
+          <p className="font-semibold">CivicX Assistant</p>
+          <p className="text-xs text-blue-100">Report civic issues instantly</p>
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+          {complaintId && (
+            <span className="text-xs bg-white/20 px-2 py-1 rounded-full">
+              ⚡ Live updates on
+            </span>
+          )}
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+            <span className="text-xs text-blue-100">Online</span>
+>>>>>>> 2d2bc782c0cf72e2daca6375674b1760781d320a
           </div>
         </div>
       </div>
 
       {/* Messages */}
+<<<<<<< HEAD
       <div className="flex-1 overflow-y-auto bg-gray-50 px-4 py-4 space-y-1">
+=======
+      <div className="flex-1 overflow-y-auto bg-gray-50 px-4 py-4">
+>>>>>>> 2d2bc782c0cf72e2daca6375674b1760781d320a
         {messages.map(msg => (
           <ChatMessage key={msg.id} message={msg} />
         ))}
@@ -349,8 +475,12 @@ export default function ChatWindow() {
         {step === 'media' && (
           <div className="ml-10 mt-1 space-y-2">
             <UploadButton onUpload={handleMediaUpload} />
+<<<<<<< HEAD
             <button
               onClick={handleSkipMedia}
+=======
+            <button onClick={handleSkipMedia}
+>>>>>>> 2d2bc782c0cf72e2daca6375674b1760781d320a
               className="text-xs text-gray-400 hover:text-gray-600 underline">
               Skip for now
             </button>
@@ -360,8 +490,12 @@ export default function ChatWindow() {
         {step === 'location' && (
           <div className="ml-10 mt-1 space-y-2">
             <LocationPicker onLocation={handleLocation} />
+<<<<<<< HEAD
             <button
               onClick={handleSkipLocation}
+=======
+            <button onClick={handleSkipLocation}
+>>>>>>> 2d2bc782c0cf72e2daca6375674b1760781d320a
               className="text-xs text-gray-400 hover:text-gray-600 underline">
               Skip for now
             </button>
@@ -376,8 +510,12 @@ export default function ChatWindow() {
               className="bg-blue-600 text-white px-5 py-2 rounded-xl text-sm font-medium hover:bg-blue-700 disabled:opacity-50 shadow-sm">
               {loading ? 'Submitting...' : '✓ Submit Complaint'}
             </button>
+<<<<<<< HEAD
             <button
               onClick={handleRestart}
+=======
+            <button onClick={handleRestart}
+>>>>>>> 2d2bc782c0cf72e2daca6375674b1760781d320a
               className="bg-gray-100 text-gray-600 px-5 py-2 rounded-xl text-sm hover:bg-gray-200">
               Start over
             </button>
@@ -385,12 +523,17 @@ export default function ChatWindow() {
         )}
 
         {step === 'tracking' && (
+<<<<<<< HEAD
           <div className="ml-10 mt-3 space-y-2">
             <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm text-blue-700">
               ⚡ Listening for updates from department...
             </div>
             <button
               onClick={handleRestart}
+=======
+          <div className="ml-10 mt-2">
+            <button onClick={handleRestart}
+>>>>>>> 2d2bc782c0cf72e2daca6375674b1760781d320a
               className="bg-green-50 text-green-600 border border-green-200 px-5 py-2 rounded-xl text-sm hover:bg-green-100">
               + Report Another Issue
             </button>
@@ -408,11 +551,18 @@ export default function ChatWindow() {
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSend()}
             placeholder="Type your message..."
+<<<<<<< HEAD
             className="flex-1 border border-gray-300 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button
             onClick={handleSend}
             className="bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-blue-700 shadow-sm">
+=======
+            className="flex-1 border border-gray-300 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button onClick={handleSend}
+            className="bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-blue-700">
+>>>>>>> 2d2bc782c0cf72e2daca6375674b1760781d320a
             Send
           </button>
         </div>
