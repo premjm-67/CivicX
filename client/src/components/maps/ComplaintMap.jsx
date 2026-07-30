@@ -1,4 +1,5 @@
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
+import { useEffect } from 'react'
 import L from 'leaflet'
 
 delete L.Icon.Default.prototype._getIconUrl
@@ -15,8 +16,18 @@ const icon = (priority) => L.divIcon({
   className: '', iconSize: [14, 14],
 })
 
+function Recenter({ center }) {
+  const map = useMap()
+  useEffect(() => {
+    if (center) {
+      map.setView(center)
+    }
+  }, [center, map])
+  return null
+}
+
 export default function ComplaintMap({ complaints = [] }) {
-  const valid = complaints.filter(c => c.location?.lat && c.location?.lng)
+  const valid = complaints.filter(c => c.location?.lat != null && c.location?.lng != null)
   const center = valid.length ? [valid[0].location.lat, valid[0].location.lng] : [13.0827, 80.2707]
 
   return (

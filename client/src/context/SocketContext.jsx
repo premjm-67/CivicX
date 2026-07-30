@@ -10,7 +10,12 @@ export function SocketProvider({ children }) {
   const { token } = useAuth()
 
   useEffect(() => {
-    const s = io('/', { auth: { token }, transports: ['websocket'] })
+    const s = io('/', {
+      path: '/socket.io',
+      auth: { token },
+      transports: ['websocket', 'polling'],
+      forceNew: true,
+    })
     s.on('connect', () => setConnected(true))
     s.on('disconnect', () => setConnected(false))
     setSocket(s)

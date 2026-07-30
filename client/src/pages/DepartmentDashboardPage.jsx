@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
 import StatusBadge from '../components/dashboard/StatusBadge'
 import FilterBar from '../components/dashboard/FilterBar'
+import ComplaintMap from '../components/maps/ComplaintMap'
 
 const PRIORITY_COLORS = {
   HIGH: 'border-l-red-500 bg-red-50',

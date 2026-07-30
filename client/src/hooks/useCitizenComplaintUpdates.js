@@ -14,9 +14,14 @@ export const useCitizenComplaintUpdates = (complaintId, citizenId) => {
   useEffect(() => {
     if (!socket || !complaintId || !citizenId) return
 
+    const joinRooms = () => {
+      socket.emit('join-citizen', citizenId)
+      socket.emit('join-complaint', complaintId)
+    }
+
     // Join citizen's personal room
-    socket.emit('join-citizen', citizenId)
-    socket.emit('join-complaint', complaintId)
+    joinRooms()
+    socket.on('connect', joinRooms)
 
     // Listen for status updates
     socket.on('status-update', (data) => {
@@ -63,6 +68,7 @@ export const useCitizenComplaintUpdates = (complaintId, citizenId) => {
     })
 
     return () => {
+      socket.off('connect', joinRooms)
       socket.off('status-update')
       socket.off('timeline-update')
       socket.off('worker-location-update')

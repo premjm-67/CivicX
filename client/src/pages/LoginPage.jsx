@@ -36,9 +36,8 @@ export default function LoginPage() {
           <p className="text-gray-500 mt-1 text-sm">Sign in to your account</p>
         </div>
 
-        {/* Tabs */}
         <div className="flex bg-gray-100 rounded-xl p-1 mb-6">
-          {['official', 'citizen'].map(t => (
+          {['official', 'citizen'].map((t) => (
             <button key={t} onClick={() => setTab(t)}
               className={`flex-1 py-2 rounded-lg text-sm font-medium capitalize transition ${
                 tab === t ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'
@@ -55,13 +54,13 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
               className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="you@example.com" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} required
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required
               className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="••••••••" />
           </div>
@@ -70,16 +69,6 @@ export default function LoginPage() {
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
-<<<<<<< HEAD
-        <div className="mt-6 p-4 bg-gray-50 rounded-lg text-xs text-gray-500 space-y-1">
-          <p className="font-medium text-gray-600">Test roles (after backend is ready):</p>
-          <p>admin@civic.com / admin1234 — Government Admin</p>
-          <p>road@civic.com / road1234 — Road Department Admin</p>
-          <p>water@civic.com / water1234 — Water Department Admin</p>
-          <p>garbage@civic.com / garbage1234 — Garbage Department Admin</p>
-          <p>worker@civic.com / worker1234 — Worker</p>
-        </div>
-=======
 
         {tab === 'citizen' && (
           <p className="text-center text-sm text-gray-500 mt-4">
@@ -96,7 +85,6 @@ export default function LoginPage() {
             <p>worker@civic.com / worker1234 → Worker</p>
           </div>
         )}
->>>>>>> 2d2bc782c0cf72e2daca6375674b1760781d320a
       </div>
     </div>
   )

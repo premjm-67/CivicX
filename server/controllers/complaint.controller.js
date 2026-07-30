@@ -19,7 +19,7 @@ export const createComplaint = async (req, res) => {
     timeline: [{ message: 'Complaint submitted and received.', timestamp: new Date() }],
   })
 
-  emitNewComplaint(io, area, complaint)
+  emitNewComplaint(io, area, complaint.department, complaint)
   emitDashboardUpdate(io)
 
   res.status(201).json({ complaint })
@@ -66,7 +66,7 @@ export const updateStatus = async (req, res) => {
   await complaint.save()
 
   // Push to citizen socket room
-  emitStatusUpdate(io, complaint._id.toString(), status, complaint.timeline)
+  emitStatusUpdate(io, complaint._id.toString(), complaint.citizenId?.toString(), status, complaint.timeline)
   emitDashboardUpdate(io)
 
   res.json({ complaint })
@@ -88,7 +88,7 @@ export const assignDepartment = async (req, res) => {
   await complaint.save()
 
   // Push realtime to citizen
-  emitStatusUpdate(io, complaint._id.toString(), complaint.status, complaint.timeline)
+  emitStatusUpdate(io, complaint._id.toString(), complaint.citizenId?.toString(), complaint.status, complaint.timeline)
   emitDashboardUpdate(io)
 
   res.json({ complaint })
@@ -111,7 +111,7 @@ export const assignWorker = async (req, res) => {
     { new: true }
   )
 
-  emitStatusUpdate(io, complaint._id.toString(), complaint.status, complaint.timeline)
+  emitStatusUpdate(io, complaint._id.toString(), complaint.citizenId?.toString(), complaint.status, complaint.timeline)
   res.json({ complaint })
 }
 
@@ -128,7 +128,7 @@ export const addProgress = async (req, res) => {
   })
   await complaint.save()
 
-  emitStatusUpdate(io, complaint._id.toString(), complaint.status, complaint.timeline)
+  emitStatusUpdate(io, complaint._id.toString(), complaint.citizenId?.toString(), complaint.status, complaint.timeline)
 
   res.json({ complaint })
 }

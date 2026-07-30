@@ -34,5 +34,18 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ message: err.message || "Server error" })
 })
 
-const PORT = process.env.PORT || 5000
-httpServer.listen(PORT, () => console.log(`Server running on port ${PORT}`))
+const BASE_PORT = parseInt(process.env.PORT, 10) || 5000
+const tryListen = (port) => {
+  httpServer.listen(port, () => console.log(`Server running on port ${port}`))
+    .once('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        console.warn(`Port ${port} is already in use. Trying port ${port + 1}...`)
+        tryListen(port + 1)
+      } else {
+        console.error('Unexpected server error:', err)
+        process.exit(1)
+      }
+    })
+}
+
+tryListen(BASE_PORT)
