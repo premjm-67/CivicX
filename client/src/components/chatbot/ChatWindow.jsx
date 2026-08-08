@@ -11,7 +11,7 @@ const STEPS = {
   name: 'Please enter your full name.',
   phone: 'Please enter your phone number.',
   media: 'Would you like to upload any photos or videos? This is the final step before submission. (optional)',
-  location: 'Select the GCC zone, area, and street where this issue is located.',
+  location: 'Select the Chennai region, area, and street where this issue is located.',
 }
 
 export default function ChatWindow() {

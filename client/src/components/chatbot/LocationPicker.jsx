@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CORPORATION, LOCATION_OPTIONS, ZONES } from './locationOptions'
+import { CITY, LOCATION_OPTIONS, ZONES } from './locationOptions'
 
 export default function LocationPicker({ onLocation }) {
   const [zone, setZone] = useState('')
@@ -17,17 +17,17 @@ export default function LocationPicker({ onLocation }) {
 
   const handleSubmit = (event) => {
     event.preventDefault()
-    if (zone && area && street) onLocation({ city: CORPORATION, zone, area, street })
+    if (zone && area && street) onLocation({ city: CITY, zone, area, street })
   }
 
   return (
     <form onSubmit={handleSubmit} className="mt-2 space-y-2 max-w-sm">
       <p className="text-xs text-gray-500">Choose the closest address. No device location is needed.</p>
-      <select value={CORPORATION} disabled className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100">
-        <option value={CORPORATION}>{CORPORATION}</option>
+      <select value={CITY} disabled className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100">
+        <option value={CITY}>{CITY}</option>
       </select>
       <select value={zone} onChange={(e) => handleZoneChange(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
-        <option value="">Select GCC zone</option>
+        <option value="">Select Chennai region</option>
         {ZONES.map((item) => <option key={item} value={item}>{item}</option>)}
       </select>
       <select value={area} onChange={(e) => { setArea(e.target.value); setStreet('') }} disabled={!zone} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white disabled:bg-gray-100">
