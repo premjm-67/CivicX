@@ -8,10 +8,10 @@ import api from '../../services/api'
 
 const STEPS = {
   issue: "Hi! I'm CivicX 👋 I'll help you report a civic issue.\n\nPlease describe the problem you're facing.",
-  city: 'Got it! Which city is this issue in?',
-  area: 'Which area or locality is this?',
-  media: 'Would you like to upload any photos or videos? (optional)',
-  location: 'Can you share your live location? (optional — helps us pinpoint the issue)',
+  name: 'Please enter your full name.',
+  phone: 'Please enter your phone number.',
+  media: 'Would you like to upload any photos or videos? This is the final step before submission. (optional)',
+  location: 'Select the GCC zone, area, and street where this issue is located.',
 }
 
 export default function ChatWindow() {
@@ -25,7 +25,7 @@ export default function ChatWindow() {
   ])
   const [step, setStep] = useState('issue')
   const [input, setInput] = useState('')
-  const [data, setData] = useState({ issue: '', city: '', area: '', media: [], location: null })
+  const [data, setData] = useState({ issue: '', reporterName: user?.name || '', reporterPhone: user?.phone || '', city: '', zone: '', area: '', street: '', media: [] })
   const [loading, setLoading] = useState(false)
   const [complaintId, setComplaintId] = useState(null)
   const [socketConnected, setSocketConnected] = useState(false)
@@ -135,52 +135,49 @@ export default function ChatWindow() {
 
     if (step === 'issue') {
       setData((d) => ({ ...d, issue: value }))
-      setStep('city')
-      addBotMessage(STEPS.city)
-    } else if (step === 'city') {
-      setData((d) => ({ ...d, city: value }))
-      setStep('area')
-      addBotMessage(STEPS.area)
-    } else if (step === 'area') {
-      setData((d) => ({ ...d, area: value }))
-      setStep('media')
-      addBotMessage(STEPS.media)
+      setStep('name')
+      addBotMessage(STEPS.name)
+    } else if (step === 'name') {
+      setData((d) => ({ ...d, reporterName: value }))
+      setStep('phone')
+      addBotMessage(STEPS.phone)
+    } else if (step === 'phone') {
+      if (!/^[0-9+()\-\s]{7,20}$/.test(value)) {
+        addBotMessage('Please enter a valid phone number.')
+        return
+      }
+      setData((d) => ({ ...d, reporterPhone: value }))
+      setStep('location')
+      addBotMessage(STEPS.location)
     }
   }
 
   const handleMediaUpload = (files) => {
     setData((d) => ({ ...d, media: files }))
     addMessage(`📎 Uploaded ${files.length} file(s)`)
-    setTimeout(() => {
-      setStep('location')
-      addBotMessage(STEPS.location)
-    }, 600)
+    setTimeout(() => showConfirm({ ...data, media: files }), 600)
   }
 
   const handleSkipMedia = () => {
     addMessage('Skip')
-    setStep('location')
-    addBotMessage(STEPS.location)
+    showConfirm({ ...data, media: [] })
   }
 
-  const handleLocation = (coords) => {
-    setData((d) => ({ ...d, location: coords }))
-    addMessage('📍 Location shared')
-    setTimeout(() => showConfirm(), 600)
+  const handleLocation = (address) => {
+    setData((d) => ({ ...d, ...address }))
+    addMessage(`📍 ${address.street}, ${address.area}, ${address.city}`)
+    setStep('media')
+    addBotMessage(STEPS.media)
   }
 
-  const handleSkipLocation = () => {
-    addMessage('Skip')
-    showConfirm()
-  }
-
-  const showConfirm = () => {
+  const showConfirm = (complaintData = data) => {
     setStep('confirm')
     addBotMessage(
       `Here's your complaint summary:\n\n` +
-        `📝 Issue: ${data.issue}\n` +
-        `🏙️ City: ${data.city}\n` +
-        `📍 Area: ${data.area}\n\n` +
+        `📝 Issue: ${complaintData.issue}\n` +
+        `🏙️ City: ${complaintData.city}\n` +
+        `📍 Area: ${complaintData.area}\n` +
+        `🛣️ Street: ${complaintData.street}\n\n` +
         'Shall I submit this complaint?'
     )
   }
@@ -192,12 +189,12 @@ export default function ChatWindow() {
     try {
       const formData = new FormData()
       formData.append('description', data.issue)
+      formData.append('reporterName', data.reporterName)
+      formData.append('reporterPhone', data.reporterPhone)
       formData.append('city', data.city)
+      formData.append('zone', data.zone)
       formData.append('area', data.area)
-      if (data.location) {
-        formData.append('lat', data.location.lat)
-        formData.append('lng', data.location.lng)
-      }
+      formData.append('street', data.street)
       data.media.forEach((file) => formData.append('media', file))
 
       const res = await api.post('/complaints', formData)
@@ -214,9 +211,11 @@ export default function ChatWindow() {
             priority: complaint.priority,
             department: complaint.department,
             aiSummary: complaint.aiSummary,
-            status: 'pending',
+            status: complaint.status,
             city: data.city,
+            zone: data.zone,
             area: data.area,
+            street: data.street,
             createdAt: new Date().toISOString(),
           }, ...existing]
           localStorage.setItem(`civicx_complaints_${user._id}`, JSON.stringify(updated))
@@ -229,17 +228,23 @@ export default function ChatWindow() {
       setStep('tracking')
       lastTimelineCount.current = 1
 
-      addBotMessage(`✅ Complaint submitted!\n\n🔖 ID: ${id}\n\nYour complaint is saved. View it anytime in "My Complaints" even after logout.`)
+      addBotMessage(
+        `${res.data.duplicate ? '✅ You joined the existing complaint.' : '✅ Complaint submitted!'}\n\n` +
+          `🔖 ID: ${id}\n\n` +
+          `${res.data.duplicate ? 'You will receive the same realtime updates as other reporters.' : 'Your complaint is saved. View it anytime in "My Complaints" even after logout.'}`
+      )
 
-      setTimeout(() => {
-        addBotMessage(
-          `🤖 AI Analysis Complete:\n\n` +
-            `📂 Category: ${complaint.category}\n` +
-            `🚨 Priority: ${complaint.priority}\n` +
-            `🏛️ Department: ${complaint.department}\n` +
-            `📋 Summary: ${complaint.aiSummary}`
-        )
-      }, 1500)
+      if (!res.data.duplicate) {
+        setTimeout(() => {
+          addBotMessage(
+            `🤖 AI Analysis Complete:\n\n` +
+              `📂 Category: ${complaint.category}\n` +
+              `🚨 Priority: ${complaint.priority}\n` +
+              `🏛️ Department: ${complaint.department}\n` +
+              `📋 Summary: ${complaint.aiSummary}`
+          )
+        }, 1500)
+      }
 
       setTimeout(() => {
         addBotMessage(
@@ -261,7 +266,7 @@ export default function ChatWindow() {
   const handleRestart = () => {
     setMessages([{ id: 1, sender: 'bot', text: `Hello ${user?.name || 'there'}! 👋\n\n${STEPS.issue}` }])
     setStep('issue')
-    setData({ issue: '', city: '', area: '', media: [], location: null })
+    setData({ issue: '', reporterName: user?.name || '', reporterPhone: user?.phone || '', city: '', zone: '', area: '', street: '', media: [] })
     setInput('')
     setComplaintId(null)
     lastTimelineCount.current = 1
@@ -303,9 +308,6 @@ export default function ChatWindow() {
         {step === 'location' && (
           <div className="ml-10 mt-1 space-y-2">
             <LocationPicker onLocation={handleLocation} />
-            <button onClick={handleSkipLocation} className="text-xs text-gray-400 hover:text-gray-600 underline">
-              Skip for now
-            </button>
           </div>
         )}
 
@@ -334,7 +336,7 @@ export default function ChatWindow() {
         <div ref={bottomRef} />
       </div>
 
-      {['issue', 'city', 'area'].includes(step) && (
+      {['issue', 'name', 'phone'].includes(step) && (
         <div className="bg-white border-t border-gray-200 px-4 py-3 flex gap-2 flex-shrink-0">
           <input
             value={input}
