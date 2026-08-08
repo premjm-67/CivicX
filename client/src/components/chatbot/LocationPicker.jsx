@@ -1,32 +1,46 @@
 import { useState } from 'react'
+import { CORPORATION, LOCATION_OPTIONS, ZONES } from './locationOptions'
 
 export default function LocationPicker({ onLocation }) {
-  const [status, setStatus] = useState('idle')
+  const [zone, setZone] = useState('')
+  const [area, setArea] = useState('')
+  const [street, setStreet] = useState('')
 
-  const getLocation = () => {
-    setStatus('loading')
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        onLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude })
-        setStatus('done')
-      },
-      () => setStatus('error')
-    )
+  const areas = zone ? Object.keys(LOCATION_OPTIONS[zone]) : []
+  const streets = zone && area ? LOCATION_OPTIONS[zone][area] : []
+
+  const handleZoneChange = (value) => {
+    setZone(value)
+    setArea('')
+    setStreet('')
+  }
+
+  const handleSubmit = (event) => {
+    event.preventDefault()
+    if (zone && area && street) onLocation({ city: CORPORATION, zone, area, street })
   }
 
   return (
-    <div className="mt-2">
-      {status === 'idle' && (
-        <button onClick={getLocation} className="inline-flex items-center gap-2 bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm text-gray-600 hover:border-blue-400 hover:text-blue-600 transition">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-          </svg>
-          Share my location
-        </button>
-      )}
-      {status === 'loading' && <p className="text-sm text-gray-500">Getting location...</p>}
-      {status === 'done' && <p className="text-sm text-green-600 font-medium">✓ Location captured</p>}
-      {status === 'error' && <p className="text-sm text-red-500">Could not get location. You can skip.</p>}
-    </div>
+    <form onSubmit={handleSubmit} className="mt-2 space-y-2 max-w-sm">
+      <p className="text-xs text-gray-500">Choose the closest address. No device location is needed.</p>
+      <select value={CORPORATION} disabled className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100">
+        <option value={CORPORATION}>{CORPORATION}</option>
+      </select>
+      <select value={zone} onChange={(e) => handleZoneChange(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+        <option value="">Select GCC zone</option>
+        {ZONES.map((item) => <option key={item} value={item}>{item}</option>)}
+      </select>
+      <select value={area} onChange={(e) => { setArea(e.target.value); setStreet('') }} disabled={!zone} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white disabled:bg-gray-100">
+        <option value="">Select area</option>
+        {areas.map((item) => <option key={item} value={item}>{item}</option>)}
+      </select>
+      <select value={street} onChange={(e) => setStreet(e.target.value)} disabled={!area} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white disabled:bg-gray-100">
+        <option value="">Select street</option>
+        {streets.map((item) => <option key={item} value={item}>{item}</option>)}
+      </select>
+      <button type="submit" disabled={!street} className="bg-blue-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-40">
+        Confirm location
+      </button>
+    </form>
   )
 }
