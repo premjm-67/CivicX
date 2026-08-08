@@ -3,7 +3,6 @@ import { useParams } from 'react-router-dom'
 import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import { useCitizenComplaintUpdates } from '../../hooks/useCitizenComplaintUpdates'
-import LiveTrackingMap from './LiveTrackingMap'
 import RealtimeNotification from '../shared/RealtimeNotification'
 
 const STATUS_STYLES = {
@@ -17,7 +16,6 @@ export default function TrackingView() {
   const { user } = useAuth()
   const [complaint, setComplaint] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [workerLocation, setWorkerLocation] = useState(null)
   const updates = useCitizenComplaintUpdates(id, user?._id)
 
   useEffect(() => {
@@ -47,9 +45,6 @@ export default function TrackingView() {
           }]
         }))
       }
-      if (updates.workerLocation) {
-        setWorkerLocation(updates.workerLocation)
-      }
     }
   }, [updates, complaint])
 
@@ -60,18 +55,6 @@ export default function TrackingView() {
     <div className="max-w-4xl mx-auto px-4 py-8">
       <RealtimeNotification updates={updates} position="top-right" />
       <div className="space-y-6">
-        {/* Live Map Tracking */}
-        {complaint.location && (
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-            <h3 className="font-semibold text-sm text-gray-700 p-6 pb-3">Live Complaint Tracking</h3>
-            <LiveTrackingMap
-              complaintLocation={complaint.location}
-              workerLocation={workerLocation?.location}
-              status={complaint.status}
-            />
-          </div>
-        )}
-        
         {/* Complaint Details */}
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-5">
           <div className="flex items-center justify-between">
@@ -84,7 +67,7 @@ export default function TrackingView() {
           <div className="space-y-2 text-sm text-gray-600">
             <p><span className="font-medium text-gray-800">ID:</span> <span className="font-mono text-xs">{complaint._id}</span></p>
             <p><span className="font-medium text-gray-800">Issue:</span> {complaint.description}</p>
-            <p><span className="font-medium text-gray-800">Location:</span> {complaint.area}, {complaint.city}</p>
+            <p><span className="font-medium text-gray-800">Location:</span> {complaint.street ? `${complaint.street}, ` : ''}{complaint.area}, {complaint.city}</p>
             {complaint.category && <p><span className="font-medium text-gray-800">Category:</span> {complaint.category}</p>}
             {complaint.department && <p><span className="font-medium text-gray-800">Assigned to:</span> {complaint.department} Department</p>}
             {complaint.assignedTo && <p><span className="font-medium text-gray-800">Assigned Worker:</span> {complaint.assignedTo.name}</p>}

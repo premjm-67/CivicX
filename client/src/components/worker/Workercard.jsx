@@ -11,7 +11,7 @@ export default function WorkerCard({ complaint, onUpdate }) {
         <p className="text-sm font-semibold text-gray-800 flex-1 line-clamp-2 mr-2">{complaint.description}</p>
         <StatusBadge status={complaint.status} />
       </div>
-      <p className="text-xs text-gray-500">{complaint.area}, {complaint.city}</p>
+      <p className="text-xs text-gray-500">{complaint.street ? `${complaint.street}, ` : ''}{complaint.area}, {complaint.city}</p>
       {complaint.aiSummary && <p className="text-xs text-gray-400 mt-1 line-clamp-1">AI: {complaint.aiSummary}</p>}
       {currentLocation && <p className="text-xs text-green-600 mt-1">📍 Live: {currentLocation.lat.toFixed(4)}, {currentLocation.lng.toFixed(4)}</p>}
       {error && <p className="text-xs text-red-500 mt-1">⚠️ {error}</p>}

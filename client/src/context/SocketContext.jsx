@@ -10,6 +10,12 @@ export function SocketProvider({ children }) {
   const { token } = useAuth()
 
   useEffect(() => {
+    if (!token) {
+      setSocket(null)
+      setConnected(false)
+      return undefined
+    }
+
     const s = io('/', {
       path: '/socket.io',
       auth: { token },
@@ -18,6 +24,7 @@ export function SocketProvider({ children }) {
     })
     s.on('connect', () => setConnected(true))
     s.on('disconnect', () => setConnected(false))
+    s.on('connect_error', () => setConnected(false))
     setSocket(s)
     return () => s.disconnect()
   }, [token])

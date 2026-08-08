@@ -21,8 +21,8 @@ export default function Navbar() {
 
   const getLiveTrackingLink = () => {
     if (!user) return null
-    if (user.role === 'admin') return { to: '/admin-live', label: '🌐 Live Map' }
-    if (user.role === 'worker') return { to: '/worker-live', label: '📍 Live View' }
+    if (user.role === 'admin') return { to: '/admin-live', label: 'Operations' }
+    if (user.role === 'worker') return { to: '/worker-live', label: 'Assigned Work' }
     return null
   }
 

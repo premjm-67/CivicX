@@ -24,7 +24,7 @@ export default function ComplaintDetail({ complaint, onUpdate }) {
       <div className="flex items-start justify-between">
         <div>
           <h2 className="text-lg font-bold text-gray-800">{complaint.description}</h2>
-          <p className="text-sm text-gray-500 mt-1">{complaint.area}, {complaint.city}</p>
+          <p className="text-sm text-gray-500 mt-1">{complaint.street ? `${complaint.street}, ` : ''}{complaint.area}, {complaint.city}</p>
         </div>
         <StatusBadge status={status} />
       </div>
@@ -56,6 +56,19 @@ export default function ComplaintDetail({ complaint, onUpdate }) {
         <AssignDepartment complaintId={complaint._id} current={complaint.department}
           onAssigned={(dept) => onUpdate({ ...complaint, department: dept })} />
       </div>
+
+      {complaint.reporters?.length > 0 && (
+        <div>
+          <p className="text-sm font-semibold text-gray-700 mb-2">Supporting Reporters ({complaint.reporters.length})</p>
+          <div className="space-y-2">
+            {complaint.reporters.map((reporter, index) => (
+              <div key={`${reporter.userId?._id || reporter.userId || reporter.phone}-${index}`} className="text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2">
+                <span className="font-medium text-gray-800">{reporter.name}</span> · {reporter.phone}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div>
         <p className="text-sm font-semibold text-gray-700 mb-2">Update Status</p>
