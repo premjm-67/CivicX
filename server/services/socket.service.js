@@ -1,4 +1,4 @@
-export const emitStatusUpdate = (io, complaintId, citizenId, status, timeline) => {
+export const emitStatusUpdate = (io, complaintId, citizenId, status, timeline, reporters = []) => {
   const payload = { complaintId, status, timeline }
 
   // notify anyone watching this specific complaint
@@ -8,6 +8,10 @@ export const emitStatusUpdate = (io, complaintId, citizenId, status, timeline) =
   if (citizenId) {
     io.to(`citizen-${citizenId}`).emit('my-complaint-update', payload)
   }
+  reporters
+    .map((reporter) => reporter.userId?.toString())
+    .filter(Boolean)
+    .forEach((reporterId) => io.to(`citizen-${reporterId}`).emit('my-complaint-update', payload))
 }
 
 export const emitNewComplaint = (io, area, dept, complaint) => {
