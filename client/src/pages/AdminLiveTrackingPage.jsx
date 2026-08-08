@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useSocket } from '../context/SocketContext'
 import api from '../services/api'
-import AdminLiveMap from '../components/admin/AdminLiveMap'
 import Loader from '../components/shared/Loader'
 
 export default function AdminLiveTrackingPage() {
   const [complaints, setComplaints] = useState([])
-  const [workers, setWorkers] = useState({})
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({ total: 0, active: 0, resolved: 0 })
+  const [query, setQuery] = useState('')
   const { socket, connected } = useSocket()
 
   useEffect(() => {
@@ -42,18 +41,6 @@ export default function AdminLiveTrackingPage() {
       setStats(s => ({ ...s, total: s.total + 1, active: s.active + 1 }))
     })
 
-    // Listen for worker location updates
-    socket.on('worker-location-update-live', (data) => {
-      setWorkers(prev => ({
-        ...prev,
-        [data.workerId]: {
-          location: data.location,
-          complaintId: data.complaintId,
-          timestamp: data.timestamp
-        }
-      }))
-    })
-
     // Listen for complaint updates
     socket.on('complaint-update-live', (updatedComplaint) => {
       setComplaints(prev =>
@@ -68,10 +55,26 @@ export default function AdminLiveTrackingPage() {
 
     return () => {
       socket.off('new-complaint-live')
-      socket.off('worker-location-update-live')
       socket.off('complaint-update-live')
     }
   }, [socket, complaints])
+
+  const visibleComplaints = complaints.filter((complaint) => {
+    const text = `${complaint.description} ${complaint.zone || ''} ${complaint.area || ''} ${complaint.street || ''}`.toLowerCase()
+    return text.includes(query.toLowerCase())
+  })
+
+  const exportComplaints = () => {
+    const rows = visibleComplaints.map(c => [c._id, c.status, c.priority, c.department, c.zone, c.area, c.street])
+    const csv = [['ID', 'Status', 'Priority', 'Department', 'Zone', 'Area', 'Street'], ...rows]
+      .map(row => row.map(value => `"${String(value || '').replaceAll('"', '""')}"`).join(','))
+      .join('\n')
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
+    link.download = 'civicflow-complaints.csv'
+    link.click()
+    URL.revokeObjectURL(link.href)
+  }
 
   if (loading) return <Loader />
 
@@ -79,13 +82,19 @@ export default function AdminLiveTrackingPage() {
     <div className="max-w-7xl mx-auto px-4 py-6">
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold text-gray-800">Live Tracking Dashboard</h1>
+          <h1 className="text-2xl font-bold text-gray-800">Complaint Operations</h1>
           <div className="flex items-center gap-2">
             <div className={`w-3 h-3 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`} />
             <span className="text-sm text-gray-600">{connected ? 'Live' : 'Offline'}</span>
           </div>
         </div>
-        <p className="text-gray-600">Real-time monitoring of all complaints and worker locations</p>
+        <p className="text-gray-600">Real-time monitoring of complaint status and assigned teams</p>
+      </div>
+
+      <div className="flex flex-wrap gap-3 mb-6">
+        <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search issue, zone, area, or street"
+          className="flex-1 min-w-64 border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+        <button onClick={exportComplaints} className="bg-gray-800 text-white rounded-lg px-4 py-2 text-sm">Export CSV</button>
       </div>
 
       {/* Stats */}
@@ -103,35 +112,30 @@ export default function AdminLiveTrackingPage() {
           <p className="text-3xl font-bold text-green-600">{stats.resolved}</p>
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-sm text-gray-600">Workers Tracking</p>
-          <p className="text-3xl font-bold text-purple-600">{Object.keys(workers).length}</p>
+          <p className="text-sm text-gray-600">Open Reports</p>
+          <p className="text-3xl font-bold text-purple-600">{complaints.filter(c => c.status !== 'resolved').length}</p>
         </div>
       </div>
 
-      {/* Main Map */}
-      <AdminLiveMap complaints={complaints} workers={workers} />
-
-      {/* Live Activity List */}
+      {/* Live activity list */}
       <div className="mt-6 bg-white border border-gray-200 rounded-xl p-6">
-        <h2 className="font-semibold text-lg text-gray-800 mb-4">Active Complaints with Live Tracking</h2>
+        <h2 className="font-semibold text-lg text-gray-800 mb-4">Complaint Activity</h2>
         <div className="space-y-3 max-h-96 overflow-y-auto">
-          {complaints
-            .filter(c => c.status !== 'resolved' && workers[c.assignedTo?._id])
+          {visibleComplaints
+            .filter(c => c.status !== 'resolved')
             .length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-8">No active workers tracking</p>
+              <p className="text-sm text-gray-500 text-center py-8">No active complaints</p>
             ) : (
-              complaints
+              visibleComplaints
                 .filter(c => c.status !== 'resolved')
                 .map(complaint => {
-                  const worker = workers[complaint.assignedTo?._id]
                   return (
                     <div key={complaint._id} className="flex items-start gap-4 pb-3 border-b border-gray-100 last:border-b-0">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-gray-800 truncate">{complaint.description}</p>
-                        <p className="text-xs text-gray-500">{complaint.area}, {complaint.city}</p>
+                        <p className="text-xs text-gray-500">{complaint.street}, {complaint.area}, {complaint.city}</p>
                         <p className="text-xs text-gray-600 mt-1">
                           {complaint.assignedTo?.name || 'Unassigned'}
-                          {worker && ` • 📍 ${worker.location.lat.toFixed(4)}, ${worker.location.lng.toFixed(4)}`}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
@@ -142,9 +146,6 @@ export default function AdminLiveTrackingPage() {
                         }`}>
                           {complaint.status}
                         </span>
-                        {worker && (
-                          <span className="text-xs text-green-600">🟢 Live</span>
-                        )}
                       </div>
                     </div>
                   )

@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useSocket } from '../context/SocketContext'
 import api from '../services/api'
-import WorkerLiveMap from '../components/worker/WorkerLiveMap'
 import Loader from '../components/shared/Loader'
 
 export default function WorkerLiveTrackingPage() {
@@ -10,7 +9,6 @@ export default function WorkerLiveTrackingPage() {
   const { socket, connected } = useSocket()
   const [complaints, setComplaints] = useState([])
   const [loading, setLoading] = useState(true)
-  const [otherWorkers, setOtherWorkers] = useState({})
   const [stats, setStats] = useState({ assigned: 0, inProgress: 0, completed: 0 })
 
   useEffect(() => {
@@ -38,20 +36,6 @@ export default function WorkerLiveTrackingPage() {
     // Join worker live tracking room
     socket.emit('join-worker-live', user._id)
 
-    // Listen for other workers' location updates
-    socket.on('worker-location-update-live', (data) => {
-      if (data.workerId !== user._id) {
-        setOtherWorkers(prev => ({
-          ...prev,
-          [data.workerId]: {
-            location: data.location,
-            complaintId: data.complaintId,
-            timestamp: data.timestamp
-          }
-        }))
-      }
-    })
-
     // Listen for complaint updates
     socket.on('complaint-update-live', (updatedComplaint) => {
       setComplaints(prev =>
@@ -60,7 +44,6 @@ export default function WorkerLiveTrackingPage() {
     })
 
     return () => {
-      socket.off('worker-location-update-live')
       socket.off('complaint-update-live')
     }
   }, [socket, user])
@@ -96,12 +79,9 @@ export default function WorkerLiveTrackingPage() {
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-4">
           <p className="text-sm text-gray-600">Nearby Workers</p>
-          <p className="text-3xl font-bold text-purple-600">{Object.keys(otherWorkers).length}</p>
+          <p className="text-3xl font-bold text-purple-600">{complaints.filter(c => c.status === 'pending').length}</p>
         </div>
       </div>
-
-      {/* Main Map */}
-      <WorkerLiveMap myComplaints={complaints} otherWorkers={otherWorkers} />
 
       {/* Assigned Complaints */}
       <div className="mt-6 bg-white border border-gray-200 rounded-xl p-6">
@@ -114,12 +94,7 @@ export default function WorkerLiveTrackingPage() {
               <div key={complaint._id} className="flex items-start gap-4 pb-3 border-b border-gray-100 last:border-b-0">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-gray-800 truncate">{complaint.description}</p>
-                  <p className="text-xs text-gray-500">{complaint.area}, {complaint.city}</p>
-                  {complaint.location && (
-                    <p className="text-xs text-gray-600 mt-1">
-                      📍 {complaint.location.lat.toFixed(4)}, {complaint.location.lng.toFixed(4)}
-                    </p>
-                  )}
+                  <p className="text-xs text-gray-500">{complaint.street ? `${complaint.street}, ` : ''}{complaint.area}, {complaint.city}</p>
                 </div>
                 <div className="text-right">
                   <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
@@ -136,28 +111,6 @@ export default function WorkerLiveTrackingPage() {
         </div>
       </div>
 
-      {/* Nearby Workers */}
-      {Object.keys(otherWorkers).length > 0 && (
-        <div className="mt-6 bg-white border border-gray-200 rounded-xl p-6">
-          <h2 className="font-semibold text-lg text-gray-800 mb-4">Nearby Workers</h2>
-          <div className="space-y-3 max-h-60 overflow-y-auto">
-            {Object.entries(otherWorkers).map(([workerId, workerData]) => (
-              <div key={workerId} className="flex items-start gap-4 pb-3 border-b border-gray-100 last:border-b-0">
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-gray-800">Worker #{workerId.slice(0, 8)}</p>
-                  <p className="text-xs text-gray-600">
-                    📍 {workerData.location.lat.toFixed(4)}, {workerData.location.lng.toFixed(4)}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Last update: {new Date(workerData.timestamp).toLocaleTimeString()}
-                  </p>
-                </div>
-                <span className="text-sm text-green-600 font-semibold">🟢 Active</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   )
 }

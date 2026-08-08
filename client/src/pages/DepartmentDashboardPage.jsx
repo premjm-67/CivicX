@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
 import StatusBadge from '../components/dashboard/StatusBadge'
 import FilterBar from '../components/dashboard/FilterBar'
-import ComplaintMap from '../components/maps/ComplaintMap'
 
 const PRIORITY_COLORS = {
   HIGH: 'border-l-red-500 bg-red-50',
@@ -19,7 +18,7 @@ export default function DepartmentDashboardPage() {
   const navigate = useNavigate()
   const [complaints, setComplaints] = useState([])
   const [filtered, setFiltered] = useState([])
-  const [filters, setFilters] = useState({ area: '', status: '', priority: '', category: '' })
+  const [filters, setFilters] = useState({ area: '', zone: '', street: '', status: '', priority: '', category: '' })
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({ total: 0, pending: 0, inProgress: 0, resolved: 0 })
 
@@ -62,6 +61,8 @@ export default function DepartmentDashboardPage() {
     if (filters.status) r = r.filter(c => c.status === filters.status)
     if (filters.priority) r = r.filter(c => c.priority === filters.priority)
     if (filters.area) r = r.filter(c => c.area?.toLowerCase().includes(filters.area.toLowerCase()))
+    if (filters.zone) r = r.filter(c => c.zone?.toLowerCase().includes(filters.zone.toLowerCase()))
+    if (filters.street) r = r.filter(c => c.street?.toLowerCase().includes(filters.street.toLowerCase()))
     setFiltered(r)
   }, [filters, complaints])
 
@@ -121,7 +122,7 @@ export default function DepartmentDashboardPage() {
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 cursor-pointer" onClick={() => navigate(`/complaint/${c._id}`)}>
                 <p className="text-sm font-semibold text-gray-800 line-clamp-2">{c.description}</p>
-                <p className="text-xs text-gray-500 mt-1">{c.area}, {c.city}</p>
+                <p className="text-xs text-gray-500 mt-1">{c.street}, {c.area}, {c.city}</p>
                 {c.aiSummary && <p className="text-xs text-gray-400 mt-1 line-clamp-1">AI: {c.aiSummary}</p>}
                 <div className="flex gap-2 mt-2 flex-wrap">
                   <StatusBadge status={c.status} />
