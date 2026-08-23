@@ -1,4 +1,6 @@
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
+import api from '../../services/api'
 import StatusBadge from './StatusBadge'
 
 const PRIORITY = { HIGH: 'text-red-600 bg-red-50 border-red-200', MEDIUM: 'text-orange-600 bg-orange-50 border-orange-200', LOW: 'text-green-600 bg-green-50 border-green-200' }
@@ -11,6 +13,18 @@ const timeAgo = (date) => {
 
 export default function ComplaintCard({ complaint }) {
   const navigate = useNavigate()
+  const { user } = useAuth()
+
+  const handleDelete = async (event) => {
+    event.stopPropagation()
+    if (!window.confirm('Delete this complaint permanently?')) return
+    try {
+      await api.delete(`/complaints/${complaint._id}`)
+      window.location.reload()
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to delete complaint')
+    }
+  }
   return (
     <div onClick={() => navigate(`/complaint/${complaint._id}`)}
       className="bg-white border border-gray-200 rounded-xl p-4 cursor-pointer hover:shadow-md hover:border-blue-300 transition-all">
@@ -30,6 +44,9 @@ export default function ComplaintCard({ complaint }) {
         <span className="text-xs text-gray-400 ml-auto">{timeAgo(complaint.createdAt)}</span>
       </div>
       {complaint.aiSummary && <p className="text-xs text-gray-400 mt-2 line-clamp-1">AI: {complaint.aiSummary}</p>}
+      {user?.role === 'admin' && (
+        <button onClick={handleDelete} className="mt-3 text-xs text-red-600 hover:text-red-800">Delete complaint</button>
+      )}
     </div>
   )
 }

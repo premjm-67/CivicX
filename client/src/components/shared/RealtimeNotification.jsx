@@ -11,10 +11,10 @@ export default function RealtimeNotification({ updates, position = 'top-right' }
     if (updates.statusUpdates.length > 0) {
       const lastStatus = updates.statusUpdates[updates.statusUpdates.length - 1]
       newToasts.push({
-        id: `status-${lastStatus.complaintId}`,
+        id: `status-${lastStatus.complaintId}-${Date.now()}`,
         type: 'status',
         title: '📢 Status Update',
-        message: `Your complaint status is now: ${lastStatus.status.toUpperCase()}`,
+        message: lastStatus.message || `Your complaint status is now: ${lastStatus.status.toUpperCase()}`,
         timestamp: lastStatus.receivedAt
       })
     }
@@ -22,7 +22,7 @@ export default function RealtimeNotification({ updates, position = 'top-right' }
     if (updates.timelineUpdates.length > 0) {
       const lastTimeline = updates.timelineUpdates[updates.timelineUpdates.length - 1]
       newToasts.push({
-        id: `timeline-${lastTimeline.complaintId}`,
+        id: `timeline-${lastTimeline.complaintId}-${Date.now()}`,
         type: 'timeline',
         title: '📝 Progress Update',
         message: lastTimeline.message,

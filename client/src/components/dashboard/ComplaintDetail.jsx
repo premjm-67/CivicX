@@ -2,10 +2,12 @@ import { useState } from 'react'
 import StatusBadge from './StatusBadge'
 import AssignDepartment from './AssignDepartment'
 import api from '../../services/api'
+import { useAuth } from '../../context/AuthContext'
 
 const STATUSES = ['pending', 'in-progress', 'resolved']
 
 export default function ComplaintDetail({ complaint, onUpdate }) {
+  const { user } = useAuth()
   const [status, setStatus] = useState(complaint.status)
   const [updating, setUpdating] = useState(false)
 
@@ -51,11 +53,13 @@ export default function ComplaintDetail({ complaint, onUpdate }) {
         </div>
       )}
 
-      <div>
-        <p className="text-sm font-semibold text-gray-700 mb-2">Assign Department</p>
-        <AssignDepartment complaintId={complaint._id} current={complaint.department}
-          onAssigned={(dept) => onUpdate({ ...complaint, department: dept })} />
-      </div>
+      {user?.role === 'admin' && (
+        <div>
+          <p className="text-sm font-semibold text-gray-700 mb-2">Assign Department</p>
+          <AssignDepartment complaintId={complaint._id} current={complaint.department}
+            onAssigned={(dept) => onUpdate({ ...complaint, department: dept })} />
+        </div>
+      )}
 
       {complaint.reporters?.length > 0 && (
         <div>

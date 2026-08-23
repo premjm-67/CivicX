@@ -208,8 +208,6 @@ export default function ChatWindow() {
             _id: id,
             description: data.issue,
             category: complaint.category,
-            priority: complaint.priority,
-            department: complaint.department,
             aiSummary: complaint.aiSummary,
             status: complaint.status,
             city: data.city,
@@ -231,17 +229,14 @@ export default function ChatWindow() {
       addBotMessage(
         `${res.data.duplicate ? '✅ You joined the existing complaint.' : '✅ Complaint submitted!'}\n\n` +
           `🔖 ID: ${id}\n\n` +
-          `${res.data.duplicate ? 'You will receive the same realtime updates as other reporters.' : 'Your complaint is saved. View it anytime in "My Complaints" even after logout.'}`
+          `${res.data.duplicate ? 'You will receive the same live updates as other reporters.' : 'Your complaint is saved. You can track its progress anytime in "My Complaints".'}`
       )
 
       if (!res.data.duplicate) {
         setTimeout(() => {
           addBotMessage(
-            `🤖 AI Analysis Complete:\n\n` +
-              `📂 Category: ${complaint.category}\n` +
-              `🚨 Priority: ${complaint.priority}\n` +
-              `🏛️ Department: ${complaint.department}\n` +
-              `📋 Summary: ${complaint.aiSummary}`
+            `🤖 Complaint received successfully.\n\n` +
+              `📋 Summary: ${complaint.aiSummary || 'Your issue has been logged and is being reviewed.'}`
           )
         }, 1500)
       }

@@ -14,6 +14,12 @@ const reporterSchema = new mongoose.Schema({
   joinedAt: { type: Date, default: Date.now },
 }, { _id: false })
 
+const feedbackSchema = new mongoose.Schema({
+  rating: { type: Number, min: 1, max: 5, required: true },
+  comment: { type: String, default: '' },
+  submittedAt: { type: Date, default: Date.now },
+}, { _id: false })
+
 const complaintSchema = new mongoose.Schema({
   description: { type: String, required: true },
   city: { type: String, required: true },
@@ -46,6 +52,7 @@ const complaintSchema = new mongoose.Schema({
   reporters: { type: [reporterSchema], default: [] },
   assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   timeline: [timelineSchema],
+  feedback: { type: feedbackSchema, default: null },
 }, { timestamps: true })
 
 export default mongoose.model('Complaint', complaintSchema)

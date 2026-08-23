@@ -33,6 +33,19 @@ export default function MyComplaintsPage() {
     }
   }
 
+  const handleDelete = async (event, id) => {
+    event.stopPropagation()
+    if (!window.confirm('Delete this complaint permanently?')) return
+    try {
+      await api.delete(`/complaints/${id}`)
+      const remaining = complaints.filter((complaint) => complaint._id !== id)
+      setComplaints(remaining)
+      localStorage.setItem(`civicx_complaints_${user?._id}`, JSON.stringify(remaining))
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to delete complaint')
+    }
+  }
+
   useEffect(() => {
     loadComplaints()
   }, [user?._id])
@@ -83,13 +96,14 @@ export default function MyComplaintsPage() {
                 <StatusBadge status={c.status} />
               </div>
               <div className="flex items-center gap-2 flex-wrap">
-                {c.category && <span className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full">{c.category}</span>}
-                {c.priority && <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${c.priority === 'HIGH' ? 'bg-red-50 text-red-600' : c.priority === 'MEDIUM' ? 'bg-orange-50 text-orange-600' : 'bg-green-50 text-green-600'}`}>{c.priority}</span>}
-                {c.department && <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">{c.department} Dept</span>}
+                <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">Track status</span>
                 <span className="text-xs text-gray-400 ml-auto">{new Date(c.createdAt).toLocaleDateString()}</span>
               </div>
               {c.aiSummary && <p className="text-xs text-gray-400 mt-2 line-clamp-1">AI: {c.aiSummary}</p>}
-              <p className="text-xs text-blue-500 mt-2">Tap to view full timeline →</p>
+              <div className="flex items-center justify-between mt-2">
+                <p className="text-xs text-blue-500">Tap to view full timeline →</p>
+                <button onClick={(event) => handleDelete(event, c._id)} className="text-xs text-red-600 hover:text-red-800">Delete</button>
+              </div>
             </div>
           ))}
         </div>

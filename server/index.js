@@ -13,16 +13,38 @@ import dashboardRoutes from "./routes/dashboard.routes.js"
 dotenv.config()
 connectDB()
 
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5174',
+].filter(Boolean)
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true)
+      return
+    }
+
+    console.warn(`Blocked CORS request from: ${origin}`)
+    callback(new Error('Not allowed by CORS'))
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+}
+
 const app = express()
 const httpServer = createServer(app)
 
 export const io = new Server(httpServer, {
-  cors: { origin: process.env.CLIENT_URL, methods: ["GET", "POST"] }
+  cors: corsOptions,
 })
 
 initSocket(io)
 
-app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }))
+app.use(cors(corsOptions))
 app.use(express.json())
 
 app.use("/api/auth", authRoutes)

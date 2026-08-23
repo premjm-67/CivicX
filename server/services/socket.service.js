@@ -1,10 +1,15 @@
-export const emitStatusUpdate = (io, complaintId, citizenId, status, timeline, reporters = []) => {
-  const payload = { complaintId, status, timeline }
+export const emitStatusUpdate = (io, complaintId, citizenId, status, timeline, reporters = [], message = '', meta = {}) => {
+  const payload = {
+    complaintId,
+    status,
+    timeline,
+    message: message || `Complaint status updated to ${status}`,
+    timestamp: new Date(),
+    ...meta,
+  }
 
-  // notify anyone watching this specific complaint
   io.to(`complaint-${complaintId}`).emit('status-update', payload)
 
-  // notify the citizen directly via their own room
   if (citizenId) {
     io.to(`citizen-${citizenId}`).emit('my-complaint-update', payload)
   }

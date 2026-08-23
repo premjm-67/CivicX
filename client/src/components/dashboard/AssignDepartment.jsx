@@ -1,12 +1,16 @@
 import { useState } from 'react'
 import api from '../../services/api'
+import { useAuth } from '../../context/AuthContext'
 
 const DEPTS = ['Road', 'Water', 'Garbage', 'Electrical', 'Drainage']
 
 export default function AssignDepartment({ complaintId, current, onAssigned }) {
+  const { user } = useAuth()
   const [dept, setDept] = useState(current || '')
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
+
+  if (user?.role !== 'admin') return null
 
   const handleAssign = async () => {
     if (!dept) return alert('Please select a department')

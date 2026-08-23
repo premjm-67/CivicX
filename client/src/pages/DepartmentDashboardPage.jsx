@@ -73,6 +73,17 @@ export default function DepartmentDashboardPage() {
     } catch { alert('Failed to update status') }
   }
 
+  const handleDelete = async (event, id) => {
+    event.stopPropagation()
+    if (!window.confirm('Delete this complaint permanently?')) return
+    try {
+      await api.delete(`/complaints/${id}`)
+      await fetchComplaints()
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to delete complaint')
+    }
+  }
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-6">
@@ -147,6 +158,10 @@ export default function DepartmentDashboardPage() {
                 <button onClick={() => navigate(`/complaint/${c._id}`)}
                   className="text-xs bg-gray-50 text-gray-600 px-3 py-1.5 rounded-lg hover:bg-gray-100 whitespace-nowrap">
                   Add Progress
+                </button>
+                <button onClick={(event) => handleDelete(event, c._id)}
+                  className="text-xs bg-red-50 text-red-600 px-3 py-1.5 rounded-lg hover:bg-red-100 whitespace-nowrap">
+                  Delete
                 </button>
               </div>
             </div>

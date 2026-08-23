@@ -8,7 +8,8 @@ export const useCitizenComplaintUpdates = (complaintId, citizenId) => {
     timelineUpdates: [],
     workerLocation: null,
     workerAssigned: null,
-    lastUpdate: null
+    lastUpdate: null,
+    latestMessage: ''
   })
 
   useEffect(() => {
@@ -29,7 +30,8 @@ export const useCitizenComplaintUpdates = (complaintId, citizenId) => {
         setUpdates(prev => ({
           ...prev,
           statusUpdates: [...prev.statusUpdates, { ...data, receivedAt: new Date() }],
-          lastUpdate: new Date()
+          lastUpdate: new Date(),
+          latestMessage: data.message || `Complaint status updated to ${data.status}`
         }))
       }
     })
@@ -40,7 +42,8 @@ export const useCitizenComplaintUpdates = (complaintId, citizenId) => {
         setUpdates(prev => ({
           ...prev,
           timelineUpdates: [...prev.timelineUpdates, { ...data, receivedAt: new Date() }],
-          lastUpdate: new Date()
+          lastUpdate: new Date(),
+          latestMessage: data.message || prev.latestMessage
         }))
       }
     })
