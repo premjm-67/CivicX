@@ -25,8 +25,13 @@ export default function ComplaintCard({ complaint }) {
       alert(err.response?.data?.message || 'Failed to delete complaint')
     }
   }
+
+  const handleOpen = () => {
+    navigate(user?.role === 'citizen' ? `/track/${complaint._id}` : `/complaint/${complaint._id}`)
+  }
+
   return (
-    <div onClick={() => navigate(`/complaint/${complaint._id}`)}
+    <div onClick={handleOpen}
       className="bg-white border border-gray-200 rounded-xl p-4 cursor-pointer hover:shadow-md hover:border-blue-300 transition-all">
       <div className="flex items-start justify-between gap-2">
         <p className="text-sm font-semibold text-gray-800 line-clamp-2 flex-1">{complaint.description}</p>

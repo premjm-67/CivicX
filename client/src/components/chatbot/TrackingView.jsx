@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
@@ -20,9 +20,11 @@ export default function TrackingView() {
   const [loading, setLoading] = useState(true)
   const [feedback, setFeedback] = useState({ rating: 5, comment: '' })
   const [submittingFeedback, setSubmittingFeedback] = useState(false)
+  const appliedStatusCount = useRef(0)
+  const appliedTimelineCount = useRef(0)
   const updates = useCitizenComplaintUpdates(id, user?._id)
 
-  const loadComplaint = async () => {
+  const loadComplaint = useCallback(async () => {
     try {
       const res = await api.get(`/complaints/${id}`)
       setComplaint(res.data.complaint)
@@ -35,35 +37,44 @@ export default function TrackingView() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [id])
 
   useEffect(() => {
     loadComplaint()
-  }, [id])
+  }, [loadComplaint])
 
   // Update complaint with real-time changes
   useEffect(() => {
-    if (updates.lastUpdate && complaint) {
-      if (updates.statusUpdates.length > 0) {
-        const lastStatusUpdate = updates.statusUpdates[updates.statusUpdates.length - 1]
-        setComplaint(prev => ({
-          ...prev,
-          status: lastStatusUpdate.status,
-          timeline: lastStatusUpdate.timeline || prev.timeline
-        }))
+    if (!updates.lastUpdate) return
+
+    const hasNewStatus = updates.statusUpdates.length > appliedStatusCount.current
+    const newTimelineUpdates = updates.timelineUpdates.slice(appliedTimelineCount.current)
+    if (!hasNewStatus && newTimelineUpdates.length === 0) return
+
+    const lastStatusUpdate = hasNewStatus
+      ? updates.statusUpdates[updates.statusUpdates.length - 1]
+      : null
+
+    setComplaint((prev) => {
+      if (!prev) return prev
+      const nextTimeline = lastStatusUpdate?.timeline || [
+        ...(prev.timeline || []),
+        ...newTimelineUpdates.map((update) => ({
+          message: update.message,
+          timestamp: update.timestamp,
+        })),
+      ]
+
+      return {
+        ...prev,
+        ...(lastStatusUpdate ? { status: lastStatusUpdate.status } : {}),
+        timeline: nextTimeline,
       }
-      if (updates.timelineUpdates.length > 0) {
-        const lastTimelineUpdate = updates.timelineUpdates[updates.timelineUpdates.length - 1]
-        setComplaint(prev => ({
-          ...prev,
-          timeline: [...(prev.timeline || []), {
-            message: lastTimelineUpdate.message,
-            timestamp: lastTimelineUpdate.timestamp
-          }]
-        }))
-      }
-    }
-  }, [updates, complaint])
+    })
+
+    appliedStatusCount.current = updates.statusUpdates.length
+    appliedTimelineCount.current = updates.timelineUpdates.length
+  }, [updates.lastUpdate, updates.statusUpdates, updates.timelineUpdates])
 
   const handleFeedbackSubmit = async () => {
     try {

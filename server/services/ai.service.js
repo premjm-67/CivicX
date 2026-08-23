@@ -16,6 +16,7 @@ const getGenAI = () => {
 }
 
 const allowedDepartments = ['Road', 'Water', 'Garbage', 'Electrical', 'Drainage']
+const allowedCategories = ['Road', 'Water', 'Garbage', 'Electrical', 'Drainage', 'Other']
 
 const inferComplaintClassification = (description = '', city = '', area = '') => {
   const text = `${description} ${city} ${area}`.toLowerCase()
@@ -33,7 +34,7 @@ const inferComplaintClassification = (description = '', city = '', area = '') =>
   }
 
   if (/garbage|trash|waste|dump|sanitation|odor/i.test(text)) {
-    return { category: 'Sanitation', department: 'Garbage', priority: 'MEDIUM', aiSummary: 'Sanitation issue reported.' }
+    return { category: 'Garbage', department: 'Garbage', priority: 'MEDIUM', aiSummary: 'Sanitation issue reported.' }
   }
 
   if (/road|pothole|lane|traffic|signal|street|crack|block/i.test(text)) {
@@ -68,6 +69,20 @@ const normalizeDepartment = (value, category) => {
   return map[normalized.toLowerCase()] || 'Other'
 }
 
+const normalizeCategory = (value) => {
+  const normalized = String(value || '').trim()
+  if (allowedCategories.includes(normalized)) return normalized
+
+  const map = {
+    sanitation: 'Garbage',
+    trash: 'Garbage',
+    waste: 'Garbage',
+    safety: 'Other',
+  }
+
+  return map[normalized.toLowerCase()] || 'Other'
+}
+
 const extractJson = (text) => {
   const trimmed = text.trim()
   const fenced = trimmed.replace(/```json|```/g, '').trim()
@@ -87,7 +102,7 @@ export const processComplaint = async (description, city, area) => {
   try {
     console.log('📤 Sending complaint to Gemini:', { description, city, area })
     const model = getGenAI().getGenerativeModel({
-      model: 'gemini-2.0-flash',
+      model: process.env.GEMINI_MODEL || 'gemini-3.6-flash',
       generationConfig: {
         temperature: 0.2,
         responseMimeType: 'application/json',
@@ -101,7 +116,7 @@ export const processComplaint = async (description, city, area) => {
     const parsed = JSON.parse(extractJson(text))
     console.log('✅ Gemini AI result:', parsed)
 
-    const category = String(parsed.category || 'Other').trim()
+    const category = normalizeCategory(parsed.category)
     const priority = String(parsed.priority || 'LOW').trim().toUpperCase()
     const department = normalizeDepartment(parsed.department, category)
     const aiSummary = String(parsed.summary || parsed.aiSummary || '').trim()

@@ -17,9 +17,11 @@ const complaintForResponse = (complaint, user) => {
 const canAccessComplaint = (complaint, user) => {
   if (user.role === 'admin') return true
   if (user.role === 'department_admin') return complaint.department === user.department
-  if (user.role === 'worker') return complaint.assignedTo?.toString() === user._id.toString()
-  return complaint.citizenId?.toString() === user._id.toString() ||
-    complaint.reporters.some((reporter) => reporter.userId?.toString() === user._id.toString())
+  const getId = (value) => value?._id?.toString() || value?.toString()
+  const userId = user._id.toString()
+  if (user.role === 'worker') return getId(complaint.assignedTo) === userId
+  return getId(complaint.citizenId) === userId ||
+    complaint.reporters.some((reporter) => getId(reporter.userId) === userId)
 }
 
 export const createComplaint = async (req, res) => {

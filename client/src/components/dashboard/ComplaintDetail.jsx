@@ -74,19 +74,21 @@ export default function ComplaintDetail({ complaint, onUpdate }) {
         </div>
       )}
 
-      <div>
-        <p className="text-sm font-semibold text-gray-700 mb-2">Update Status</p>
-        <div className="flex gap-2 flex-wrap">
-          {STATUSES.map(s => (
-            <button key={s} onClick={() => handleStatus(s)} disabled={status === s || updating}
-              className={`px-4 py-1.5 rounded-lg text-sm font-medium border transition capitalize ${
-                status === s ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:border-blue-400'
-              } disabled:opacity-40`}>
-              {s}
-            </button>
-          ))}
+      {['department_admin', 'worker'].includes(user?.role) && (
+        <div>
+          <p className="text-sm font-semibold text-gray-700 mb-2">Update Status</p>
+          <div className="flex gap-2 flex-wrap">
+            {STATUSES.map(s => (
+              <button key={s} onClick={() => handleStatus(s)} disabled={status === s || updating}
+                className={`px-4 py-1.5 rounded-lg text-sm font-medium border transition capitalize ${
+                  status === s ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:border-blue-400'
+                } disabled:opacity-40`}>
+                {s}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {complaint.timeline?.length > 0 && (
         <div>
